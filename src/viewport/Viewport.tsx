@@ -8,7 +8,9 @@ import { SketchOverlay } from './SketchOverlay'
 import { WorkplaneHelper } from './WorkplaneHelper'
 import { SketchFeatureView } from './SketchFeatureView'
 import { ExtrudeArrow } from './ExtrudeArrow'
-import type { Workplane, SketchPoint } from '../sketch/entities'
+import type { Workplane, SketchPoint, Sketch } from '../sketch/entities'
+import { sketchToEdges } from '../kernel/operations/sketch-to-face'
+import { occApi } from '../engine/occ-api'
 
 interface ViewportProps {
   onRequestExtrude?: (sketchFeatureId: string) => void
@@ -72,12 +74,48 @@ export function Viewport({ onRequestExtrude }: ViewportProps) {
         const params = selectedFeature.params as {
           workplane: Workplane
           points: Record<string, SketchPoint>
+          entities: Record<string, any>
+          constraints: Record<string, any>
         }
         return (
           <ExtrudeArrow
             workplane={params.workplane}
             points={params.points}
-            onClick={() => onRequestExtrude?.(selectedFeatureId)}
+            onExtrude={async (depth: number) => {
+              const sketch: Sketch = {
+                id: selectedFeature.id,
+                points: new Map(Object.entries(params.points)),
+                entities: new Map(Object.entries(params.entities)),
+                constraints: new Map(Object.entries(params.constraints)),
+                workplane: params.workplane,
+              }
+              const edges = sketchToEdges(sketch)
+              if (edges.length === 0) return
+              try {
+                const currentShapeRef = useAppStore.getState().currentShapeRef
+                const result = await occApi.extrudeSketch(
+                  edges,
+                  depth,
+                  sketch.workplane.origin,
+                  sketch.workplane.normal,
+                  sketch.workplane.xAxis,
+                  currentShapeRef != null ? 'fuse' : 'new',
+                  currentShapeRef ?? undefined,
+                )
+                const id = crypto.randomUUID()
+                useAppStore.getState().addFeature({
+                  id,
+                  type: 'extrude',
+                  name: `Extrude ${id.slice(0, 4)}`,
+                  params: { depth, sketchId: selectedFeature.id },
+                  shapeRef: result.shapeRef,
+                })
+                useAppStore.getState().setCurrentTessellation(result.tessellation)
+                useAppStore.getState().setCurrentShapeRef(result.shapeRef)
+              } catch (err: any) {
+                console.error('Extrude failed:', err)
+              }
+            }}
           />
         )
       })()}
