@@ -60,6 +60,10 @@ export interface AppState {
   // Sketch state
   activeSketchId: string | null
   setActiveSketchId: (id: string | null) => void
+
+  // Drag state
+  isDraggingExtrude: boolean
+  setIsDraggingExtrude: (v: boolean) => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -140,4 +144,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   activeSketchId: null,
   setActiveSketchId: (id) => set({ activeSketchId: id }),
+
+  isDraggingExtrude: false,
+  setIsDraggingExtrude: (v) => set({ isDraggingExtrude: v }),
 }))

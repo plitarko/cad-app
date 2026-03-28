@@ -22,6 +22,7 @@ export function Viewport({ onRequestExtrude }: ViewportProps) {
   const activeSketch = useSketchStore((s) => s.activeSketch)
   const features = useAppStore((s) => s.features)
   const selectedFeatureId = useAppStore((s) => s.selectedFeatureId)
+  const isDraggingExtrude = useAppStore((s) => s.isDraggingExtrude)
 
   return (
     <Canvas
@@ -81,6 +82,7 @@ export function Viewport({ onRequestExtrude }: ViewportProps) {
           <ExtrudeArrow
             workplane={params.workplane}
             points={params.points}
+            entities={params.entities}
             onExtrude={async (depth: number) => {
               const sketch: Sketch = {
                 id: selectedFeature.id,
@@ -112,6 +114,8 @@ export function Viewport({ onRequestExtrude }: ViewportProps) {
                 })
                 useAppStore.getState().setCurrentTessellation(result.tessellation)
                 useAppStore.getState().setCurrentShapeRef(result.shapeRef)
+                // Keep sketch selected so user can extrude again
+                useAppStore.getState().setSelectedFeatureId(selectedFeature.id)
               } catch (err: any) {
                 console.error('Extrude failed:', err)
               }
@@ -131,7 +135,7 @@ export function Viewport({ onRequestExtrude }: ViewportProps) {
         makeDefault
         enableDamping
         dampingFactor={0.1}
-        enabled={appMode !== 'sketch'}
+        enabled={appMode !== 'sketch' && !isDraggingExtrude}
         mouseButtons={{
           LEFT: 0,
           MIDDLE: 2,
