@@ -6,11 +6,14 @@ import { ShapeMesh } from './ShapeMesh'
 import { EdgeOverlay } from './EdgeOverlay'
 import { SketchOverlay } from './SketchOverlay'
 import { WorkplaneHelper } from './WorkplaneHelper'
+import { SketchFeatureView } from './SketchFeatureView'
 
 export function Viewport() {
   const tessellation = useAppStore((s) => s.currentTessellation)
   const appMode = useAppStore((s) => s.appMode)
   const activeSketch = useSketchStore((s) => s.activeSketch)
+  const features = useAppStore((s) => s.features)
+  const selectedFeatureId = useAppStore((s) => s.selectedFeatureId)
 
   return (
     <Canvas
@@ -43,6 +46,18 @@ export function Viewport() {
           <EdgeOverlay tessellation={tessellation} />
         </>
       )}
+
+      {/* Render completed sketches in model mode */}
+      {appMode === 'model' && features
+        .filter((f) => f.type === 'sketch')
+        .map((f) => (
+          <SketchFeatureView
+            key={f.id}
+            feature={f}
+            isSelected={f.id === selectedFeatureId}
+          />
+        ))
+      }
 
       {appMode === 'sketch' && activeSketch && (
         <>
