@@ -7,8 +7,14 @@ import { EdgeOverlay } from './EdgeOverlay'
 import { SketchOverlay } from './SketchOverlay'
 import { WorkplaneHelper } from './WorkplaneHelper'
 import { SketchFeatureView } from './SketchFeatureView'
+import { ExtrudeArrow } from './ExtrudeArrow'
+import type { Workplane, SketchPoint } from '../sketch/entities'
 
-export function Viewport() {
+interface ViewportProps {
+  onRequestExtrude?: (sketchFeatureId: string) => void
+}
+
+export function Viewport({ onRequestExtrude }: ViewportProps) {
   const tessellation = useAppStore((s) => s.currentTessellation)
   const appMode = useAppStore((s) => s.appMode)
   const activeSketch = useSketchStore((s) => s.activeSketch)
@@ -58,6 +64,23 @@ export function Viewport() {
           />
         ))
       }
+
+      {/* Extrude arrow on selected sketch */}
+      {appMode === 'model' && selectedFeatureId && (() => {
+        const selectedFeature = features.find((f) => f.id === selectedFeatureId)
+        if (!selectedFeature || selectedFeature.type !== 'sketch') return null
+        const params = selectedFeature.params as {
+          workplane: Workplane
+          points: Record<string, SketchPoint>
+        }
+        return (
+          <ExtrudeArrow
+            workplane={params.workplane}
+            points={params.points}
+            onClick={() => onRequestExtrude?.(selectedFeatureId)}
+          />
+        )
+      })()}
 
       {appMode === 'sketch' && activeSketch && (
         <>

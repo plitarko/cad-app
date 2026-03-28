@@ -98,7 +98,7 @@ export function App() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <FeatureTreePanel />
         <div style={{ flex: 1, position: 'relative' }}>
-          <Viewport />
+          <Viewport onRequestExtrude={handleRequestExtrude} />
           {extrudeSketch && (
             <ExtrudeDialog sketch={extrudeSketch} onClose={() => setExtrudeSketch(null)} />
           )}
